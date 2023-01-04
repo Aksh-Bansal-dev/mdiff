@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"hash/fnv"
+	"log"
 	"strings"
 )
 
@@ -31,27 +32,65 @@ func hash(s string) uint32 {
 
 func main() {
 	mkt := createMerkleTree(strings.Split(textContent, "\n"), 0, 3)
-	mkt.Print()
 	mkt2 := createMerkleTree(strings.Split(textContent2, "\n"), 0, 3)
-	mkt2.Print()
+	// mkt.Print()
+	// mkt2.Print()
+	fmt.Println(mkt.Compare(mkt2))
 }
 
-func createMerkleTree(arr []string, start int, end int) MerkleNode {
+func createMerkleTree(arr []string, start int, end int) *MerkleNode {
 	if len(arr) == 0 {
-		return MerkleNode{}
+		return &MerkleNode{}
 	}
 	if len(arr) == 1 {
-		return MerkleNode{Hash: hash(arr[0]), Left: nil, Right: nil, lineNum: fmt.Sprintf("%d", start)}
+		return &MerkleNode{Hash: hash(arr[0]), Left: nil, Right: nil, lineNum: fmt.Sprintf("%d", start)}
 	}
 	n := len(arr)
 	lNode := createMerkleTree(arr[:n/2], start, start+(end-start)/2)
 	rNode := createMerkleTree(arr[n/2:], start+(end-start)/2+1, end)
 	newHash := hash(fmt.Sprintf("%d", lNode.Hash+rNode.Hash))
-	return MerkleNode{Hash: newHash, Left: &lNode, Right: &rNode, lineNum: fmt.Sprintf("%d-%d", start, end)}
+	return &MerkleNode{Hash: newHash, Left: lNode, Right: rNode, lineNum: fmt.Sprintf("%d-%d", start, end)}
 }
 
-func (mkl1 *MerkleNode) Compare(mkl2 MerkleNode) bool {
-	return true
+func (mkl *MerkleNode) Compare(mkl2 *MerkleNode) string {
+	if mkl.lineNum != mkl2.lineNum {
+		log.Fatal("Invalid comparison")
+	}
+
+	if mkl.Hash == 0 && mkl2.Hash == 0 {
+		return ""
+	}
+	if mkl.Hash == 0 || mkl2.Hash == 0 {
+		return mkl.lineNum
+	}
+
+	if mkl.Hash == mkl2.Hash {
+		return ""
+	}
+	// mkl.child == nil && mkl2.child == nil
+	lMatch := ""
+	rMatch := ""
+
+	// mkl.child == nil && mkl2.child != nil
+	if mkl2.Left != nil {
+		lMatch = mkl.Left.lineNum
+	}
+	if mkl2.Right != nil {
+		rMatch = mkl.Right.lineNum
+	}
+
+	// mkl.child != nil && mkl2.child != nil
+	if mkl.Left != nil {
+		lMatch = mkl.Left.Compare(mkl2.Left)
+	}
+	if mkl.Right != nil {
+		rMatch = mkl.Right.Compare(mkl2.Right)
+	}
+
+	if ("" != lMatch && "" != rMatch) || (lMatch == "" && rMatch == "") {
+		return mkl.lineNum
+	}
+	return lMatch + rMatch
 }
 
 func (mkl *MerkleNode) Print() {
