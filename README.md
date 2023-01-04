@@ -1,6 +1,6 @@
 # mdiff
 
-A simple merkle tree based file watcher. It prints the line(s) which are changes in the selected file.
+A simple merkle tree based file watcher. It prints the line-number(s) which changes in the selected file.
 
 > Note: The aim of this project is to learn about merkle trees.
 
