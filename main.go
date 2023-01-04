@@ -1,21 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"hash/fnv"
+	"io"
 	"log"
-	"strings"
+	"os"
+	"time"
 )
-
-const textContent = `aaaaaaaaaaaaaaaaaa
-bbbbbbbbbbbbbbbbbbbb
-ccccccccccccccccccccc
-ddddddddddddddddddddd`
-
-const textContent2 = `aaaaaaaaaaaaaaaaaa
-bbbbbbbbbbbbbbbbbbb
-ccccccccccccccccccccc
-ddddddddddddddddddddd`
 
 type MerkleNode struct {
 	Hash    uint32
@@ -31,11 +24,31 @@ func hash(s string) uint32 {
 }
 
 func main() {
-	mkt := createMerkleTree(strings.Split(textContent, "\n"), 0, 3)
-	mkt2 := createMerkleTree(strings.Split(textContent2, "\n"), 0, 3)
-	// mkt.Print()
-	// mkt2.Print()
-	fmt.Println(mkt.Compare(mkt2))
+	f, err := os.Open("sample.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	scanner := bufio.NewScanner(f)
+	lines := []string{}
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	mkt := createMerkleTree(lines, 0, len(lines)-1)
+	for {
+		time.Sleep(time.Second)
+		f.Seek(0, io.SeekStart)
+		scanner = bufio.NewScanner(f)
+		lines = []string{}
+		for scanner.Scan() {
+			lines = append(lines, scanner.Text())
+		}
+		mkt2 := createMerkleTree(lines, 0, len(lines)-1)
+		diff := mkt.Compare(mkt2)
+		if diff != "" {
+			fmt.Println(diff)
+			mkt = mkt2
+		}
+	}
 }
 
 func createMerkleTree(arr []string, start int, end int) *MerkleNode {
@@ -54,7 +67,11 @@ func createMerkleTree(arr []string, start int, end int) *MerkleNode {
 
 func (mkl *MerkleNode) Compare(mkl2 *MerkleNode) string {
 	if mkl.lineNum != mkl2.lineNum {
-		log.Fatal("Invalid comparison")
+		if mkl.lineNum == "" {
+			return mkl2.lineNum
+		} else {
+			return mkl.lineNum
+		}
 	}
 
 	if mkl.Hash == 0 && mkl2.Hash == 0 {
