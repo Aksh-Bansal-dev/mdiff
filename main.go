@@ -67,10 +67,10 @@ func createMerkleTree(arr []string, start int, end int) *MerkleNode {
 
 func (mkl *MerkleNode) Compare(mkl2 *MerkleNode) string {
 	if mkl.lineNum != mkl2.lineNum {
-		if mkl.lineNum == "" {
-			return mkl2.lineNum
+		if mkl.lineNum < mkl2.lineNum {
+			return "line(s) added"
 		} else {
-			return mkl.lineNum
+			return "line(s) deleted"
 		}
 	}
 
@@ -104,7 +104,7 @@ func (mkl *MerkleNode) Compare(mkl2 *MerkleNode) string {
 		rMatch = mkl.Right.Compare(mkl2.Right)
 	}
 
-	if ("" != lMatch && "" != rMatch) || (lMatch == "" && rMatch == "") {
+	if lMatch == "" && rMatch == "" {
 		return mkl.lineNum
 	}
 	return lMatch + rMatch
