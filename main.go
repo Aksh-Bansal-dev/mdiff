@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"hash/fnv"
 	"io"
@@ -22,6 +23,8 @@ func hash(s string) uint32 {
 	h.Write([]byte(s))
 	return h.Sum32()
 }
+
+var fileName = flag.String("l", "sample.txt", "location of file to be watched")
 
 func main() {
 	f, err := os.Open("sample.txt")
@@ -56,13 +59,13 @@ func createMerkleTree(arr []string, start int, end int) *MerkleNode {
 		return &MerkleNode{}
 	}
 	if len(arr) == 1 {
-		return &MerkleNode{Hash: hash(arr[0]), Left: nil, Right: nil, lineNum: fmt.Sprintf("%d", start)}
+		return &MerkleNode{Hash: hash(arr[0]), Left: nil, Right: nil, lineNum: fmt.Sprintf("%d", start+1)}
 	}
 	n := len(arr)
 	lNode := createMerkleTree(arr[:n/2], start, start+(end-start)/2)
 	rNode := createMerkleTree(arr[n/2:], start+(end-start)/2+1, end)
 	newHash := hash(fmt.Sprintf("%d", lNode.Hash+rNode.Hash))
-	return &MerkleNode{Hash: newHash, Left: lNode, Right: rNode, lineNum: fmt.Sprintf("%d-%d", start, end)}
+	return &MerkleNode{Hash: newHash, Left: lNode, Right: rNode, lineNum: fmt.Sprintf("%d-%d", start+1, end+1)}
 }
 
 func (mkl *MerkleNode) Compare(mkl2 *MerkleNode) string {
@@ -107,7 +110,7 @@ func (mkl *MerkleNode) Compare(mkl2 *MerkleNode) string {
 	if lMatch == "" && rMatch == "" {
 		return mkl.lineNum
 	}
-	return lMatch + rMatch
+	return lMatch + " " + rMatch
 }
 
 func (mkl *MerkleNode) Print() {
